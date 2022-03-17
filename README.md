@@ -9,7 +9,7 @@
 
 `https://victim.com/response [X-Forwarded-Host=reflect.com] may be reflected in body!` 
 
-## headers
+## Headers
   ```txt
   x-forward-for
   x-forwarded-for
