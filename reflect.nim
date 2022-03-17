@@ -6,9 +6,9 @@ import strutils
 import urlly
 import sequtils
 import os
-const  reflect_str  = "REFLECT_STR"
+const  reflect_str  = "reflect.com"
 var include_header = false
-var file_location {.threadvar.}:string
+var file_location:string
 if paramCount() == 1:
   echo "invalid argument"
   quit()
@@ -29,7 +29,7 @@ if thread_count == 0:
 
 setMaxPoolSize(thread_count)
 var input = readAll(stdin)
-proc make_request(site:seq[string]):void=
+proc make_request(site:seq[string],file:string):void=
      for s in site:
         try:
           var client = newHttpClient()
@@ -42,21 +42,27 @@ proc make_request(site:seq[string]):void=
               if value in body:
                 echo s & "\u001b[32m ["&key&"="&value&"]"&" may be reflected in body!\u001b[0m"
           client.close()
+        except:
+          discard
+        try:
           if include_header:
-            for head in lines(file_location):
+            var value = file
+            for head in lines(value):
                var client_h = newHttpClient()
                client_h.headers = newHttpHeaders({head:reflect_str})
                var content_h = client_h.request(s,HttpGet)
-               if reflect_str in content_h.body():
+               var body = content_h.body()
+               if reflect_str in body:
                  echo s & "\u001b[32m [header => "&head&"]"&" may be reflected in body!\u001b[0m"
                client_h.close()
         except:
           discard
 
+
 var all_url = split(input,"\n")
 var sub_seq = all_url.distribute(thread_count)
 for s in sub_seq:
-  spawn make_request(s)
+  spawn make_request(s,file_location)
 sync()
 
 
